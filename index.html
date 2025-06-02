@@ -1,99 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lua Obfuscator</title>
   <style>
     body {
-      background: #0f172a;
-      color: #e2e8f0;
-      font-family: monospace;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      font-family: 'Courier New', Courier, monospace;
       padding: 2rem;
+      margin: 0;
+    }
+    h1 {
+      color: #38bdf8;
     }
     textarea, pre {
       width: 100%;
-      background: #1e293b;
+      padding: 1rem;
+      background-color: #1e293b;
       color: #f8fafc;
       border: none;
-      padding: 1rem;
-      font-size: 1rem;
+      border-radius: 6px;
       margin-bottom: 1rem;
-      border-radius: 5px;
+      font-size: 1rem;
+      resize: vertical;
     }
     button {
-      background: #38bdf8;
+      background-color: #38bdf8;
       color: #0f172a;
-      padding: 0.75rem 1.5rem;
+      padding: 0.6rem 1.4rem;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       margin-right: 1rem;
-      margin-bottom: 1rem;
+      font-weight: bold;
     }
     button:hover {
-      background: #0ea5e9;
+      background-color: #0ea5e9;
     }
   </style>
 </head>
 <body>
+  <h1>Advanced Lua Obfuscator</h1>
 
-  <h1>Lua Obfuscator - Byte Layer + Hex Tail</h1>
-
-  <textarea id="input" placeholder="Paste your Lua code here..."></textarea>
-  <button onclick="obfuscate()">Obfuscate</button>
+  <textarea id="input" rows="10" placeholder="Paste your Lua code here..."></textarea>
+  <button onclick="obfuscate()">🔐 Obfuscate</button>
+  <button onclick="copyToClipboard()">📋 Copy</button>
+  <button onclick="download()">💾 Download</button>
 
   <h2>Obfuscated Output</h2>
   <pre id="output"></pre>
-  <button onclick="copyToClipboard()">📋 Copy</button>
-  <button onclick="downloadCode()">💾 Download</button>
 
   <script>
-    function getRandomByte() {
-      return Math.floor(Math.random() * 256);
-    }
-
-    function toHex(str) {
-      return Array.from(str).map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
-    }
-
     function obfuscate() {
       const input = document.getElementById('input').value;
-      if (!input) {
-        document.getElementById('output').textContent = 'No input provided!';
+      if (!input.trim()) {
+        document.getElementById('output').textContent = 'No code provided.';
         return;
       }
 
-      let obfuscated = '-- Random Byte Layer\nlocal bytes = {';
-      for (let i = 0; i < input.length; i++) {
-        obfuscated += getRandomByte();
-        if (i < input.length - 1) obfuscated += ', ';
-      }
-      obfuscated += '}\n\n';
+      const lines = input.split('\n');
+      let output = '-- Obfuscated Lua Code\n';
+      let varId = 100;
 
-      obfuscated += '-- Original Hex Dump\n';
-      obfuscated += '-- HEX: ' + toHex(input);
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
 
-      document.getElementById('output').textContent = obfuscated;
+        const stringEncoded = trimmed.replace(/"(.*?)"/g, (_, s) => `#"${s}"`);
+        const numberEncoded = stringEncoded.replace(/(\d+)/g, (_, n) => `(function() return ${n}; end)()`);
+        const wrapped = `(function() return ${numberEncoded}; end)()`;
+
+        output += `v${varId++} = ${wrapped}\n`;
+      });
+
+      output += '\nreturn v100, v101, v102 -- Sample return\n';
+      document.getElementById('output').textContent = output;
     }
 
     function copyToClipboard() {
       const text = document.getElementById('output').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Copied to clipboard!');
-      }, () => {
-        alert('Failed to copy.');
-      });
+      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'));
     }
 
-    function downloadCode() {
+    function download() {
       const blob = new Blob([document.getElementById('output').textContent], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'obfuscated.lua';
-      a.click();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'obfuscated.lua';
+      link.click();
     }
   </script>
-
 </body>
 </html>
